@@ -31,31 +31,27 @@ public class DogApiBreedFetcher implements BreedFetcher {
         final String normalized = breed.trim().toLowerCase(Locale.ROOT);
         final String url = "https://dog.ceo/api/breed/" + normalized + "/list";
 
-        Request request = new Request.Builder()
-                .url(url)
-                .get()
-                .build();
+        Request request = new Request.Builder().url(url).get().build();
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
-                throw new BreedNotFoundException("Failed to fetch sub-breeds for: " + breed);
+                throw new BreedNotFoundException(breed);
             }
 
             String body = response.body().string();
             JSONObject json = new JSONObject(body);
 
             if (!"success".equalsIgnoreCase(json.optString("status"))) {
-                throw new BreedNotFoundException("Breed not found: " + breed);
+                throw new BreedNotFoundException(breed);
             }
 
-            JSONArray arr = json.optJSONArray("message");
-            List<String> result = new ArrayList<>();
-            if (arr != null) {
-                for (int i = 0; i < arr.length(); i++) {
+            JSONArray arr = json.getJSONArray("message");
+            List<String> result = new ArrayList<>(arr.length());
+            for (int i = 0; i < arr.length(); i++) {
                     result.add(arr.getString(i));
                 }
-            }
             return result;
+
         } catch (Exception e) {
             throw new BreedNotFoundException(breed, e);
         }
